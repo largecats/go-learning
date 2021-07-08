@@ -37,7 +37,7 @@ type Fetcher interface {
 // Crawl uses fetcher to recursively crawl
 // pages starting with url, to a maximum of depth.
 func Crawl(url string, depth int, fetcher Fetcher, urlChannel chan string, urlMap SafeMap) {
-	defer close(urlChannel)
+	defer close(urlChannel) // close channel after Crawl returns
 	if depth <= 0 {
 		return
 	}
@@ -53,14 +53,14 @@ func Crawl(url string, depth int, fetcher Fetcher, urlChannel chan string, urlMa
 		urlMap.Set(url, body)
 		urlChannel <- fmt.Sprintf("found: %s %q", url, body)
 
-		subPages := make([]chan string, len(urls))
+		subPagesChannel := make([]chan string, len(urls)) // store results for sub-pages on given url
 		for i, u := range urls {
-			subPages[i] = make(chan string)
-			go Crawl(u, depth-1, fetcher, subPages[i], urlMap)
+			subPagesChannel[i] = make(chan string)
+			go Crawl(u, depth-1, fetcher, subPagesChannel[i], urlMap)
 		}
 
-		for i := range subPages {
-			for s := range subPages[i] {
+		for i := range subPagesChannel {
+			for s := range subPagesChannel[i] {
 				urlChannel <- s
 			}
 		}
