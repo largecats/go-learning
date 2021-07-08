@@ -42,15 +42,16 @@ func Crawl(url string, depth int, fetcher Fetcher, urlChannel chan string, urlMa
 		return
 	}
 
-	body, urls, err := fetcher.Fetch(url)
-	if err != nil {
-		urlChannel <- err.Error()
-		return
-	}
-
 	_, ok := urlMap.Value(url)
 	if !ok { // don't visit the same url twice
+		body, urls, err := fetcher.Fetch(url)
 		urlMap.Set(url, body)
+
+		if err != nil {
+			urlChannel <- err.Error()
+			return
+		}
+
 		urlChannel <- fmt.Sprintf("found: %s %q", url, body)
 
 		subPagesChannel := make([]chan string, len(urls)) // store results for sub-pages on given url
@@ -127,3 +128,11 @@ var fetcher = fakeFetcher{
 		},
 	},
 }
+
+/*
+found: https://golang.org/ "The Go Programming Language"
+found: https://golang.org/pkg/ "Packages"
+found: https://golang.org/pkg/fmt/ "Package fmt"
+found: https://golang.org/pkg/os/ "Package os"
+not found: https://golang.org/cmd/
+*/
