@@ -37,7 +37,7 @@ type Fetcher interface {
 // Crawl uses fetcher to recursively crawl
 // pages starting with url, to a maximum of depth.
 func Crawl(url string, depth int, fetcher Fetcher, urlChannel chan string, urlMap SafeMap) {
-	defer close(urlChannel) // close channel after Crawl returns
+	defer close(urlChannel) // close channel right before Crawl returns
 	if depth <= 0 {
 		return
 	}
